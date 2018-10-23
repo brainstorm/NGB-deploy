@@ -1,27 +1,9 @@
 ---
-# tasks file for NGB
-# 4. Import NGB files/datasets/references (passed as parameters?).
-
-# root@487b10ebf38d:/# ngb reg_ref /ngs/hg38_new/hg38_elongated_telomeres.fa -n 10x_telomeres_ref_elongated -t
-#  BIO_DATA_ITEM_ID ID                        NAME TYPE                                      PATH    FORMAT CREATED_BY        CREATED_DATE
-#                 2  1 10x_telomeres_ref_elongated FILE /ngs/hg38_new/hg38_elongated_telomeres.fa REFERENCE         42 22-10-2018 00:00:00
-# root@487b10ebf38d:/# ngb reg_file 10x_telomeres_ref_elongated /ngs/COLO829BL_bwa_truseq_hg38.bam -t
-#  BIO_DATA_ITEM_ID ID                          NAME TYPE                               PATH FORMAT CREATED_BY        CREATED_DATE
-#                 4  1 COLO829BL_bwa_truseq_hg38.bam FILE /ngs/COLO829BL_bwa_truseq_hg38.bam    BAM         42 22-10-2018 00:00:00
-# root@487b10ebf38d:/# ngb reg_file 10x_telomeres_ref_elongated /ngs/COLO829BL_bwa_truseq_hg38.bam.bai -t
-# 05:52:10.016 [main] ERROR com.epam.ngb.cli.app.Application - Unsupported file format [bai].
-# root@487b10ebf38d:/# ngb reg_dataset 10x_telomeres_ref_elongated COLO829BL_bwa_truseq_hg38.bam COLO829BL_bwa_truseq_hg38.bam
-
 - name: install python and docker essentials
   become: true
   package:
-      name: "{{ item }}"
-      state: latest
+      name: "python3-pip"
       update_cache: yes
-  with_items:
-      - jq
-      - parallel
-      - python3-pip
 
 - name: Add user to docker group
   become: true
@@ -46,9 +28,22 @@
 - name: Pull NGB docker container
   become: true
   docker_image:
-    name: lifescience/ngb
+    name: umccr/ngb
     tag: latest
     state: present
 
-- name: Run 
+# XXX: pull in reference genomes (hg38 and GRC37h) and add input dataset(s)
+# ngb reg_ref /ngs/hg38_new/hg38_elongated_telomeres.fa -n 10x_telomeres_ref_elongated -t
+# ngb reg_file 10x_telomeres_ref_elongated /ngs/COLO829BL_bwa_truseq_hg38.bam -t
+# ngb reg_dataset 10x_telomeres_ref_elongated COLO829BL_bwa_truseq_hg38.bam COLO829BL_bwa_truseq_hg38.bam
 
+- name: Run NGB
+  become: true
+  docker_container:
+    name: ngbcore
+    image: lifescience/ngb
+    state: started
+    ports:
+        - "8080:8080"
+    volumes:
+        - "/mnt:/ngs"
