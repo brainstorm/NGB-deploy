@@ -1,0 +1,54 @@
+---
+# tasks file for NGB
+# 4. Import NGB files/datasets/references (passed as parameters?).
+
+# root@487b10ebf38d:/# ngb reg_ref /ngs/hg38_new/hg38_elongated_telomeres.fa -n 10x_telomeres_ref_elongated -t
+#  BIO_DATA_ITEM_ID ID                        NAME TYPE                                      PATH    FORMAT CREATED_BY        CREATED_DATE
+#                 2  1 10x_telomeres_ref_elongated FILE /ngs/hg38_new/hg38_elongated_telomeres.fa REFERENCE         42 22-10-2018 00:00:00
+# root@487b10ebf38d:/# ngb reg_file 10x_telomeres_ref_elongated /ngs/COLO829BL_bwa_truseq_hg38.bam -t
+#  BIO_DATA_ITEM_ID ID                          NAME TYPE                               PATH FORMAT CREATED_BY        CREATED_DATE
+#                 4  1 COLO829BL_bwa_truseq_hg38.bam FILE /ngs/COLO829BL_bwa_truseq_hg38.bam    BAM         42 22-10-2018 00:00:00
+# root@487b10ebf38d:/# ngb reg_file 10x_telomeres_ref_elongated /ngs/COLO829BL_bwa_truseq_hg38.bam.bai -t
+# 05:52:10.016 [main] ERROR com.epam.ngb.cli.app.Application - Unsupported file format [bai].
+# root@487b10ebf38d:/# ngb reg_dataset 10x_telomeres_ref_elongated COLO829BL_bwa_truseq_hg38.bam COLO829BL_bwa_truseq_hg38.bam
+
+- name: install python and docker essentials
+  become: true
+  package:
+      name: "{{ item }}"
+      state: latest
+      update_cache: yes
+  with_items:
+      - jq
+      - parallel
+      - python3-pip
+
+- name: Add user to docker group
+  become: true
+  user:
+      name: ubuntu
+      groups: docker
+      append: yes
+
+- name: Add user to docker group
+  become: true
+  user:
+      name: vagrant
+      groups: docker
+      append: yes
+
+- name: Make sure vital python packages are installed system-wide 
+  become: true
+  pip:
+    name: docker-py
+    state: latest
+
+- name: Pull NGB docker container
+  become: true
+  docker_image:
+    name: lifescience/ngb
+    tag: latest
+    state: present
+
+- name: Run 
+

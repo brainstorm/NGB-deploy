@@ -1,0 +1,9 @@
+---
+- hosts: all
+  user: "{OS_USER}"
+  become: no
+  gather_facts: yes
+  
+  roles:
+    - geerlingguy.docker
+    - brainstorm.NGB
