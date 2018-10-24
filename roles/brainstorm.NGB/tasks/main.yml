@@ -1,5 +1,5 @@
 ---
-- name: install python and docker essentials
+- name: Install python and docker essentials
   become: true
   package:
       name: "{{ item }}"
@@ -42,11 +42,11 @@
         - "{{ ngb_docker_port_pair }}"
     volumes: "{{ ngb_docker_mountpoints }}"
 
-# - name: Download ref genome (hg38)
-#   get_url:
-#     url: "{{ hg38_ref }}"
-#     dest: "{{ ngb_data_dir }}"
-#     mode: 0644
+- name: Download ref genome (hg38)
+  get_url:
+    url: "{{ hg38_ref }}"
+    dest: "{{ ngb_data_dir }}"
+    mode: 0644
 
 - name: Unarchive since NGB does not support compressed reference genomes
   unarchive:
