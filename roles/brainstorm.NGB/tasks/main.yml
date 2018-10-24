@@ -2,27 +2,27 @@
 - name: install python and docker essentials
   become: true
   package:
-      name: "python3-pip"
+      name: "{{ item }}"
       update_cache: yes
+  with_items:
+        - python3-pip
+        - bwa
+        - samtools
 
 - name: Add user to docker group
   become: true
   user:
-      name: ubuntu
+      name: "{{ item }}"
       groups: docker
       append: yes
-
-- name: Add user to docker group
-  become: true
-  user:
-      name: vagrant
-      groups: docker
-      append: yes
+  with_items:
+    - ubuntu
+    - vagrant
 
 - name: Make sure vital python packages are installed system-wide 
   become: true
   pip:
-    name: docker-py
+    name: [ "docker-py", "awscli" ]
     state: latest
 
 - name: Pull NGB docker container
@@ -32,11 +32,6 @@
     tag: latest
     state: present
 
-# XXX: pull in reference genomes (hg38 and GRC37h) and add input dataset(s)
-# ngb reg_ref /ngs/hg38_new/hg38_elongated_telomeres.fa -n 10x_telomeres_ref_elongated -t
-# ngb reg_file 10x_telomeres_ref_elongated /ngs/COLO829BL_bwa_truseq_hg38.bam -t
-# ngb reg_dataset 10x_telomeres_ref_elongated COLO829BL_bwa_truseq_hg38.bam COLO829BL_bwa_truseq_hg38.bam
-
 - name: Run NGB
   become: true
   docker_container:
@@ -44,9 +39,34 @@
     image: lifescience/ngb
     state: started
     ports:
-        - "8080:8080"
-    volumes:
-        - "/mnt:/ngs"
+        - "{{ ngb_docker_port_pair }}"
+    volumes: "{{ ngb_docker_mountpoints }}"
 
-#- name: Download ref genome (hg38)
-  
+# - name: Download ref genome (hg38)
+#   get_url:
+#     url: "{{ hg38_ref }}"
+#     dest: "{{ ngb_data_dir }}"
+#     mode: 0644
+
+- name: Unarchive since NGB does not support compressed reference genomes
+  unarchive:
+    src: "{{ ngb_data_dir }}/hg38.fa.gz" 
+    dest: "{{ ngb_data_dir }}"
+    remote_src: yes
+    creates: "{{ ngb_data_dir }}/hg38.fa"
+
+- name: Index the reference genome
+  command: "bwa index hg38.fa"
+  args:
+    chdir: "{{ ngb_data_dir }}"
+    creates: "{{ ngb_data_dir }}/hg38.fa.ann"
+  async: 1000
+  poll: 0
+
+
+- name: Register and expose S3 dataset to NGB
+  command: "{{ item }}"
+  with_items:
+    - "docker exec -it ngbcore bash -c 'ngb reg_ref /ngs/hg38.fa.gz -n hg38'"
+    - "docker exec -it ngbcore bash -c 'ngb reg_file hg38 s3://umccr-primary-data-dev/COLO829BL/LR_2.2.2/phased_possorted_bam.bam -n input_BAM'"
+    - "docker exec -it ngbcore bash -c 'ngb reg_dataset hg38 input_BAM input_BAM'"
