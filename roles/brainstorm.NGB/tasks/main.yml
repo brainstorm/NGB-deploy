@@ -67,6 +67,6 @@
 - name: Register and expose S3 dataset to NGB
   command: "{{ item }}"
   with_items:
-    - "docker exec -it ngbcore bash -c 'ngb reg_ref /ngs/hg38.fa.gz -n hg38'"
+    - "docker exec -it ngbcore bash -c 'ngb reg_ref /ngs/hg38.fa -n hg38'"
     - "docker exec -it ngbcore bash -c 'ngb reg_file hg38 s3://umccr-primary-data-dev/COLO829BL/LR_2.2.2/phased_possorted_bam.bam -n input_BAM'"
     - "docker exec -it ngbcore bash -c 'ngb reg_dataset hg38 input_BAM input_BAM'"
