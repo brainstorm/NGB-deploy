@@ -47,7 +47,7 @@
   aws_s3:
     bucket: "{{ ngb_s3_refdata_bucket }}"
     object: /Hsapiens/hg38/seq/hg38.fa 
-    dest: "{{ ngb_data_dir }}/hg38.fa.fai"
+    dest: "{{ ngb_data_dir }}/hg38.fa"
     mode: get
 
 - name: Get reference index from UMCCR
