@@ -4,3 +4,4 @@ hg38_ref: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
 ngb_docker_port_pair: 8888:8080
 ngb_data_dir: "/mnt"
 ngb_docker_mountpoints: "/mnt:/ngs"
+ngb_s3_refdata_bucket: umccr-umccrise-refdata-dev

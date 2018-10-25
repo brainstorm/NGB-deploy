@@ -22,7 +22,7 @@
 - name: Make sure vital python packages are installed system-wide 
   become: true
   pip:
-    name: [ "docker-py", "awscli" ]
+    name: [ "docker-py", "awscli", "boto3", "botocore" ]
     state: latest
 
 - name: Pull NGB docker container
@@ -42,26 +42,41 @@
         - "{{ ngb_docker_port_pair }}"
     volumes: "{{ ngb_docker_mountpoints }}"
 
-- name: Download ref genome (hg38)
-  get_url:
-    url: "{{ hg38_ref }}"
-    dest: "{{ ngb_data_dir }}"
-    mode: 0644
+# XXX: Ansible double item loops/zips?
+- name: Get reference genomes from UMCCR
+  aws_s3:
+    bucket: "{{ ngb_s3_refdata_bucket }}"
+    object: /Hsapiens/hg38/seq/hg38.fa 
+    dest: "{{ ngb_data_dir }}/hg38.fa.fai"
+    mode: get
 
-- name: Unarchive since NGB does not support compressed reference genomes
-  unarchive:
-    src: "{{ ngb_data_dir }}/hg38.fa.gz" 
-    dest: "{{ ngb_data_dir }}"
-    remote_src: yes
-    creates: "{{ ngb_data_dir }}/hg38.fa"
+- name: Get reference index from UMCCR
+  aws_s3:
+    bucket: "{{ ngb_s3_refdata_bucket }}"
+    object: /Hsapiens/hg38/seq/hg38.fa.fai
+    dest: "{{ ngb_data_dir }}/hg38.fa.fai"
+    mode: get
 
-- name: Index the reference genome
-  command: "bwa index hg38.fa"
-  args:
-    chdir: "{{ ngb_data_dir }}"
-    creates: "{{ ngb_data_dir }}/hg38.fa.ann"
-  async: 1000
-  poll: 0
+# - name: Download ref genome (hg38)
+#   get_url:
+#     url: "{{ hg38_ref }}"
+#     dest: "{{ ngb_data_dir }}"
+#     mode: 0644
+
+# - name: Unarchive since NGB does not support compressed reference genomes
+#   unarchive:
+#     src: "{{ ngb_data_dir }}/hg38.fa.gz" 
+#     dest: "{{ ngb_data_dir }}"
+#     remote_src: yes
+#     creates: "{{ ngb_data_dir }}/hg38.fa"
+
+# - name: Index the reference genome
+#   command: "bwa index hg38.fa"
+#   args:
+#     chdir: "{{ ngb_data_dir }}"
+#     creates: "{{ ngb_data_dir }}/hg38.fa.ann"
+#   async: 1000
+#   poll: 0
 
 
 - name: Register and expose S3 dataset to NGB
